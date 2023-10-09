@@ -566,7 +566,7 @@ The Zen of Python, by Tim Peters
 - 遍历列表
 
     ```python
-     magicians = ['alice', 'david', 'carolina'] 
+    magicians = ['alice', 'david', 'carolina'] 
     for magician in magicians: 
     	print(magician) 
     ```
