@@ -148,7 +148,7 @@
     | /要查找的词   | n 查找下一个，N 往上查找          |
     | :noh          | 取消高亮显示                      |
     | :set nu       | 显示行号                          |
-    | :set non      | 关闭行号                          |
+    | :set nonu     | 关闭行号                          |
     | :%s/old/new/g | 替换内容  /g 替换匹配到的所有内容 |
     | :wq!          | 强制保存退出                      |
 
@@ -1076,9 +1076,9 @@ less 指令用来分屏查看文件内容，它的功能与 more 指令类似，
 
     **history （功能描述：查看已经执行过历史命令）**
 
-    **history  行数**
+    **history  行数** （显示最近使用的 n 条命令）
 
-    **！行号**
+    **！行号** （再次调用行号对应的命令）
 
 - 清空
 
@@ -1276,7 +1276,23 @@ less 指令用来分屏查看文件内容，它的功能与 more 指令类似，
     | ---- | -------------------------------------------------------- |
     | -g   | 修改用户的初始登录组，给定的组必须存在。默认组 id 是 1。 |
 
+
+为用户添加附属组：
+
+- 基本语法
+
+    **usermod -aG <附属组名> <用户名>**
+
+- 选项说明
+
+    | 选项 | 功能                                                         |
+    | ---- | ------------------------------------------------------------ |
+    | -a   | 选项表示附加，意味着将指定的组添加到用户已有的附属组列表中，而不会影响其他附属组。 |
+    | -G   | 选项表示要操作的是附属组（Supplementary Groups）。           |
+
     
+
+
 
 
 
@@ -1383,6 +1399,63 @@ less 指令用来分屏查看文件内容，它的功能与 more 指令类似，
     （2）如果查看的是**文件夹**：链接数指的是**子文件夹个数**。
 
 
+
+### 12.2 chmod 改变权限
+
+![image-20231017203804994](assets/image-20231017203804994.png)
+
+- 第一种方式变更权限 
+
+    chmod [{ugoa}{+-=}{rwx}] 文件或目录 
+
+- 第二种方式变更权限 
+
+    chmod [mode=421 ] [文件或目录]
+
+> u:所有者 g:所有组 o:其他人 a:所有人(u、g、o的总和)
+>
+> r=4 w=2 x=1   rwx=4+2+1=7
+
+示例：
+
+```bash
+[root@hadoop101 ~]# chmod 777 houge.txt
+[root@hadoop101 ~]# chmod -R 777 xiyou/
+```
+
+
+
+### 12.3 chown 改变所有者
+
+- 基本语法 
+
+    chown [选项] [最终用户] [文件或目录]  （功能描述：改变文件或者目录的所有者）
+
+- 选项说明
+
+    | 选项 | 功能     |
+    | ---- | -------- |
+    | -R   | 递归操作 |
+
+示例：
+
+```bash
+[root@hadoop101 xiyou]# chown -R atguigu:atguigu xiyou/
+```
+
+
+
+### 12.4 chgrp 改变所属组
+
+- 基本语法 
+
+    chgrp [最终用户组] [文件或目录] （功能描述：改变文件或者目录的所属组）
+
+示例：
+
+```bash
+[root@hadoop101 ~]# chgrp root houge.txt
+```
 
 
 
@@ -2215,7 +2288,7 @@ raw6       0      0 :::58                   :::*                    7           
 
 ## 17、系统定时任务
 
-### 17.1 crontab 服务管理
+### 17.1 crond 服务管理
 
 重新启动 crond 服务
 
@@ -2408,17 +2481,17 @@ yum [选项] [参数]
 
 ```bash
 [root@hadoop10 ~]# yum list | grep firefox
-firefox.x86_64                              68.10.0-1.el7.centos       @anaconda
-firefox.i686                                102.15.0-1.el7.centos      updates  
-firefox.x86_64                              102.15.0-1.el7.centos      updates  
+firefox.x86_64                    68.10.0-1.el7.centos       @anaconda
+firefox.i686                      102.15.0-1.el7.centos      updates  
+firefox.x86_64                    102.15.0-1.el7.centos      updates  
 [root@hadoop10 ~]# yum remove firefox -y
 [root@hadoop10 ~]# yum list | grep firefox
-firefox.i686                                102.15.0-1.el7.centos      updates  
-firefox.x86_64                              102.15.0-1.el7.centos      updates  
+firefox.i686                      102.15.0-1.el7.centos      updates  
+firefox.x86_64                    02.15.0-1.el7.centos      updates  
 [root@hadoop10 ~]# yum -y install firefox
 [root@hadoop10 ~]# yum list | grep firefox
-firefox.x86_64                              102.15.0-1.el7.centos      @updates 
-firefox.i686                                102.15.0-1.el7.centos      updates 
+firefox.x86_64                    102.15.0-1.el7.centos      @updates 
+firefox.i686                      102.15.0-1.el7.centos      updates 
 ```
 
 
