@@ -4,12 +4,18 @@
 
 您可以使用 HTML 来建立自己的 WEB 站点，HTML 运行在浏览器上，由浏览器来解析。
 
-HTML文档的后缀名:
+HTML文档的后缀名：
 
 - **.html**
 - **.htm**
 
 以上两种后缀名没有区别，都可以使用。
+
+HTML/CSS/JS 在线工具：https://c.runoob.com/front-end/61
+
+参考手册：https://www.runoob.com/tags/html-reference.html
+
+HTML实例：https://www.runoob.com/html/html-examples.html
 
 ## HTML 简介
 
@@ -105,7 +111,8 @@ HTML 元素:
 
 ### <!DOCTYPE> 声明
 
-<!DOCTYPE>声明有助于浏览器中正确显示网页。
+\<!DOCTYPE> 声明有助于浏览器中正确显示网页。
+
 
 网络上有很多不同的文件，如果能够正确声明HTML的版本，浏览器就能正确显示网页内容。
 
@@ -142,7 +149,7 @@ doctype 声明是不区分大小写的，以下方式均可：
 
 ### 中文编码
 
-目前在大部分浏览器中，直接输出中文会出现中文乱码的情况，这时候我们就需要在头部将字符声明为 UTF-8 或 GBK。
+目前在大部分浏览器中，直接输出中文会出现中文乱码的情况，这时候我们就需要在头部将字符声明为 UTF-8 或 GBK。
 
 `<meta charset="UTF-8">`
 
@@ -156,7 +163,7 @@ HTML 文档由 HTML 元素定义。
 | ----------------------- | ------------ | --------------- |
 | \<p>                    | 这是一个段落 | \</p>           |
 | \<a href="default.htm"> | 这是一个链接 | \</a>           |
-| \<br/>                  | 换行         |                 |
+| \<br>                   | 换行         |                 |
 
 *****开始标签常被称为**起始标签（opening tag）**，结束标签常称为**闭合标签（closing tag）**。
 
@@ -169,6 +176,12 @@ HTML 文档由 HTML 元素定义。
 - 空元素**在开始标签中进行关闭**（以开始标签的结束而结束）
 - 大多数 HTML 元素可拥有**属性**
 
+即使 \<br> 在所有浏览器中都是有效的，但使用 \<br /> 其实是更长远的保障。
+
+HTML 提示：使用小写标签
+
+因为万维网联盟（W3C）在 HTML 4 中**推荐**使用小写，而在未来 (X)HTML 版本中**强制**使用小写。
+
 
 
 ## HTML 属性
@@ -178,11 +191,26 @@ HTML 文档由 HTML 元素定义。
 - 属性一般描述于**开始标签**
 - 属性总是以名称/值对的形式出现，**比如：name="value"**。
 
+```html
+<a href="http://www.runoob.com">这是一个链接</a>
+```
+
+**HTML 属性参考手册**
+
+https://www.runoob.com/tags/html-reference.html
+
+| 属性  | 描述                                                         |
+| :---- | :----------------------------------------------------------- |
+| class | 为html元素定义一个或多个类名（classname）(类名从样式文件引入) |
+| id    | 定义元素的唯一id                                             |
+| style | 规定元素的行内样式（inline style）                           |
+| title | 描述了元素的额外信息 (作为工具条使用)                        |
 
 
 
 
-## HTML 标题
+
+## HTML 标题\<h1>
 
 HTML 标题（Heading）是通过 \<h1> - \<h6> 标签来定义的。
 
@@ -202,7 +230,7 @@ HTML 标题（Heading）是通过 \<h1> - \<h6> 标签来定义的。
 
 
 
-## HTML 水平线
+## HTML 水平线\<hr>
 
 \<hr> 标签在 HTML 页面中创建水平线。
 
@@ -218,7 +246,7 @@ hr 元素可用于分隔内容。
 
 
 
-## HTML 注释
+## HTML 注释\<!-- -->
 
 可以将注释插入 HTML 代码中，这样可以提高其可读性，使代码更易被人理解。浏览器会忽略注释，也不会显示它们。
 
@@ -234,7 +262,7 @@ hr 元素可用于分隔内容。
 
 
 
-## HTML 段落
+## HTML 段落\<p>
 
 HTML 可以将文档分割为若干段落。
 
@@ -247,7 +275,9 @@ HTML 段落是通过标签 \<p> 来定义的。
 
 **注意：**浏览器会自动地在段落的前后添加空行。（\</p> 是块级元素）
 
-### HTML 折行
+
+
+## HTML 折行\<br>
 
 如果您希望在不产生一个新段落的情况下进行换行（新行），请使用 **\<br>** 标签：
 
@@ -305,7 +335,7 @@ HTML 使用标签 \<b>("bold") 与 \<i>("italic") 对输出的文本进行格式
 
 
 
-## HTML 链接
+## HTML 链接\<a>
 
 HTML 链接是通过标签 \<a> 来定义的。
 
@@ -334,6 +364,13 @@ HTML 链接是通过标签 \<a> 来定义的。
 ```html
 <a href="https://www.runoob.com/" target="_blank" rel="noopener noreferrer">访问菜鸟教程!</a>
 ```
+
+-  _blank ：新窗口打开。
+- _parent ：在父窗口中打开链接。
+- _self ：默认，当前页面跳转。
+- _top：在当前窗体打开链接，并替换当前的整个窗体(框架页)。
+
+
 
 ### id 属性
 
@@ -368,7 +405,7 @@ id 属性可用于创建一个 HTML 文档书签。
 
 
 
-## HTML 头部
+## HTML 头部\<head>
 
 \<head> 元素包含了所有的头部标签元素。在 \<head>元素中你可以插入脚本（scripts）, 样式文件（CSS），及各种meta信息。
 
@@ -408,6 +445,10 @@ id 属性可用于创建一个 HTML 文档书签。
 </head>
 ```
 
+- rel：必需。定义当前文档与被链接文档之间的关系。rel 是 relationship的英文缩写。
+- type：规定被链接文档的 MIME 类型。
+- href：定义被链接文档的位置。
+
 ### \<style> 元素
 
 \<style> 标签定义了HTML文档的样式文件引用地址.
@@ -432,7 +473,7 @@ p {
 
 meta标签描述了一些基本的元数据。
 
-\<meta> 标签提供了元数据.元数据也不显示在页面上，但会被浏览器解析。
+\<meta> 标签提供了元数据。元数据也不显示在页面上，但会被浏览器解析。
 
 META 元素通常用于指定网页的描述，关键词，文件的最后修改时间，作者，和其他元数据。
 
@@ -476,13 +517,13 @@ META 元素通常用于指定网页的描述，关键词，文件的最后修改
 
 CSS (Cascading Style Sheets) 用于渲染HTML元素标签的样式。
 
-CSS 是在 HTML 4 开始使用的,是为了更好的渲染HTML元素而引入的.
+CSS 是在 HTML 4 开始使用的，是为了更好的渲染HTML元素而引入的.
 
 CSS 可以通过以下方式添加到HTML中:
 
-- 内联样式- 在HTML元素中使用"style" **属性**
-- 内部样式表 -在HTML文档头部 \<head> 区域使用\<style> **元素** 来包含CSS
-- 外部引用 - 使用外部 CSS **文件**
+- ==内联样式==：在HTML元素中使用"style" **属性**
+- ==内部样式表==：在HTML文档头部 \<head> 区域使用\<style> **元素** 来包含CSS
+- ==外部引用==：使用外部 CSS **文件**
 
 最好的方式是通过外部引用CSS文件.
 
@@ -518,7 +559,7 @@ CSS 可以通过以下方式添加到HTML中:
 
 现在通常使用font-family（字体），color（颜色），和font-size（字体大小）属性来定义文本样式，而不是使用\<font>标签。
 
-文本对齐方式
+**文本对齐方式**
 
 使用 text-align（文字对齐）属性指定文本的水平与垂直对齐方式：
 
@@ -533,10 +574,14 @@ CSS 可以通过以下方式添加到HTML中:
 
 ```html
 <head>
-<style type="text/css">
-body {background-color:yellow;}
-p {color:blue;}
-</style>
+    <style type="text/css">
+        body {
+            background-color:yellow;
+        }
+        p {
+            color:blue;
+        }
+    </style>
 </head>
 ```
 
@@ -546,7 +591,7 @@ p {color:blue;}
 
 ```html
 <head>
-<link rel="stylesheet" type="text/css" href="mystyle.css">
+    <link rel="stylesheet" type="text/css" href="mystyle.css">
 </head>
 ```
 
@@ -705,8 +750,8 @@ HTML 支持有序、无序和定义列表:
 
 ```html
 <ul>
-<li>Coffee</li>
-<li>Milk</li>
+    <li>Coffee</li>
+    <li>Milk</li>
 </ul>
 ```
 
@@ -718,8 +763,8 @@ HTML 支持有序、无序和定义列表:
 
 ```html
 <ol>
-<li>Coffee</li>
-<li>Milk</li>
+    <li>Coffee</li>
+    <li>Milk</li>
 </ol>
 ```
 
@@ -731,10 +776,10 @@ HTML 支持有序、无序和定义列表:
 
 ```html
 <dl>
-<dt>Coffee</dt>
-<dd>- black hot drink</dd>
-<dt>Milk</dt>
-<dd>- white cold drink</dd>
+    <dt>Coffee</dt>
+    <dd>- black hot drink</dd>
+    <dt>Milk</dt>
+    <dd>- white cold drink</dd>
 </dl>
 ```
 
@@ -766,7 +811,8 @@ Milk
 
 HTML \<div> 元素是块级元素，它可用于组合其他 HTML 元素的容器。
 
-<div> 元素没有特定的含义。除此之外，由于它属于块级元素，浏览器会在其前后显示折行。
+\<div> 元素没有特定的含义。除此之外，由于它属于块级元素，浏览器会在其前后显示折行。
+
 
 如果与 CSS 一同使用，\<div> 元素可用于对大的内容块设置样式属性。
 
@@ -782,9 +828,621 @@ HTML \<span> 元素是内联元素，可用作文本的容器
 
 
 
+## HTML 布局
+
+大多数网站会把内容安排到多个列中（就像杂志或报纸那样）。
+
+大多数网站可以使用 \<div> 或者 \<table> 元素来创建多列。CSS 用于对元素进行定位，或者为页面创建背景以及色彩丰富的外观。
+
+> 虽然我们可以使用HTML table标签来设计出漂亮的布局，但是table标签是不建议作为布局工具使用的 - 表格不是布局工具。
+
+### 使用\<div>元素
+
+div 元素是用于分组 HTML 元素的块级元素。
+
+下面的例子使用五个 div 元素来创建多列布局：
+
+```html
+<!DOCTYPE html>
+<html>
+    <head> 
+        <meta charset="utf-8"> 
+        <title>菜鸟教程(runoob.com)</title> 
+        <style>
+            html, body {
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #container {
+                height: 100%;
+            }
+
+            #header {
+                background-color:#FFA500;
+                height: 10%;
+                margin-bottom: 0;
+            }
+
+            #menu {
+                background-color:#FFD700;
+                height: 80%;
+                width: 20%;
+                float:left;
+            }
+
+            #content {
+                background-color:#EEEEEE;
+                height: 80%;
+                width: 80%;
+                float:left;
+            }
+
+            #footer {
+                background-color:#FFA500;
+                clear:both;
+                text-align:center;
+                height: 10%;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="container">
+
+            <div id="header">
+                <h1 style="margin-bottom:0;">主要的网页标题</h1>
+            </div>
+
+            <div id="menu">
+                <b>菜单</b><br>
+                HTML<br>
+                CSS<br>
+                JavaScript
+            </div>
+
+            <div id="content">
+                内容在这里
+            </div>
+
+            <div id="footer">
+                版权 © runoob.com
+            </div>
+
+        </div>
+
+    </body>
+</html>
+```
+
+<img src="assets/image-20231127215825662.png" alt="image-20231127215825662" style="zoom:25%;" />
 
 
 
+## HTML 表单
+
+HTML 表单用于收集用户的输入信息。
+
+HTML 表单表示文档中的一个区域，此区域包含交互控件，将用户收集到的信息发送到 Web 服务器。
+
+HTML 表单通常包含各种输入字段、复选框、单选按钮、下拉列表等元素。
+
+以下是一个简单的HTML表单的例子：
+
+- `<form>` 元素用于创建表单，`action` 属性定义了表单数据提交的目标 URL，`method` 属性定义了提交数据的 HTTP 方法（"post" 或 "get"）。
+- `<label>` 元素用于为表单元素添加标签，提高可访问性。
+- `<input>` 元素是最常用的表单元素之一，它可以创建文本输入框、密码框、单选按钮、复选框等。`type` 属性定义了输入框的类型，`id` 属性用于关联 `<label>` 元素，`name` 属性用于标识表单字段。
+- `<select>` 元素用于创建下拉列表，而 `<option>` 元素用于定义下拉列表中的选项。
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <form action="/" method="post">
+        <!-- 文本输入框 -->
+        <label for="name">用户名：</label>
+        <input type="text" id="name" name="name" required>
+        <br>
+
+        <!-- 密码输入框 -->
+        <label for="password">密码：</label>
+        <input type="password" id="password" name="password" required>
+        <br>
+
+        <!-- 单选按钮 -->
+        <label>性别：</label>
+        <input type="radio" id="male" name="gender" value="male" checked>
+        <label for="male">男</label>
+        <input type="radio" id="female" name="gender" value="female">
+        <label for="female">女</label>
+        <br>
+
+        <!-- 复选框 -->
+        <input type="checkbox" id="subscribe" name="subscribe" checked>
+        <label for="subscribe">订阅推送消息</label>
+        <br>
+
+        <!-- 下拉列表 -->
+        <label for="country">国家</label>
+        <select name="country" id="country">
+            <option value="cn">CN</option>
+            <option value="usa">USA</option>
+            <option value="uk">UK</option>
+        </select>
+        <br>
+
+        <!-- 提交按钮 -->
+        <input type="submit" value="提交">
+
+    </form>
+</body>
+</html>
+```
+
+### \<input>输入标签
+
+-  `<input type="text">`：文本域（Text Fields），在大多数浏览器中，文本域的默认宽度是 20 个字符。
+
+- `<input type="password">`：密码字段
+
+- `<input type="radio">`：单选按钮（Radio Buttons）
+
+- `<input type="checkbox">`：复选框（Checkboxes）
+
+- `<input type="submit">`：提交按钮(Submit)，当用户单击确认按钮时，表单的内容会被传送到服务器。表单的动作属性 **action** 定义了服务端的文件名。
+
+    ```html
+    <form name="input" action="html_form_action.php" method="get">
+    ```
+
+method 属性，它用于定义表单数据的提交方式，可以是以下值：
+
+- **post**：指的是 HTTP POST 方法，表单数据会包含在表单体内然后发送给服务器，用于提交敏感数据，如用户名与密码等。
+- **get**：默认值，指的是 HTTP GET 方法，表单数据会附加在 **action** 属性的 URL 中，并以 **?**作为分隔符，一般用于不敏感信息，如分页等。例如：`https://www.runoob.com/?page=1`，这里的 page=1 就是 get 方法提交的数据。
+
+
+
+## HTML 框架
+
+通过使用框架，你可以在同一个浏览器窗口中显示不止一个页面。
+
+**iframe语法:**
+
+```html
+<iframe src="URL"></iframe>
+```
+
+该 URL 指向不同的网页。
+
+**设置高度与宽度**
+
+height 和 width 属性用来定义iframe标签的高度与宽度。
+
+属性默认以像素为单位, 但是你可以指定其按比例显示 (如："80%")。
+
+```html
+<iframe src="demo_iframe.htm" width="200" height="200"></iframe>
+```
+
+**移除边框**
+
+frameborder 属性用于定义iframe表示是否显示边框。
+
+设置属性值为 "0" 移除iframe的边框:
+
+```html
+<iframe src="demo_iframe.htm" frameborder="0"></iframe>
+```
+
+**使用 iframe 来显示目标链接页面**
+
+iframe 可以显示一个目标链接的页面
+
+目标链接的属性必须使用 iframe 的属性，如下实例:
+
+```html
+<iframe src="demo_iframe.htm" name="iframe_a"></iframe>
+<p><a href="https://www.runoob.com" target="iframe_a" rel="noopener">RUNOOB.COM</a></p>
+```
+
+
+
+## HTML 颜色
+
+HTML 颜色由红色、绿色、蓝色混合而成。
+
+HTML 颜色由一个十六进制符号来定义，这个符号由红色、绿色和蓝色的值组成（RGB）。
+
+每种颜色的最小值是0（十六进制：#00）。最大值是255（十六进制：#FF）。
+
+- **颜色十六进制(Color HEX)**：\#000000
+- **颜色RGB(Color RGB)**：rgb(0,0,0)
+
+
+
+**Web安全色**
+
+数年以前，当大多数计算机仅支持 256 种颜色的时候，一系列 216 种 Web 安全色作为 Web 标准被建议使用。其中的原因是，微软和 Mac 操作系统使用了 40 种不同的保留的固定系统颜色（双方大约各使用 20 种）。
+
+我们不确定如今这么做的意义有多大，因为越来越多的计算机有能力处理数百万种颜色，不过做选择还是你自己。
+
+最初，216 跨平台 web 安全色被用来确保：**当计算机使用 256 色调色板时，所有的计算机能够正确地显示所有的颜色。**
+
+
+
+### 颜色名
+
+141个颜色名称是在HTML和CSS颜色规范定义的（17标准颜色，再加124）
+
+| **颜色名** | **HEX** |
+| ---------- | ------- |
+| AliceBlue  | #F0F8FF |
+| Aqua       | #00FFFF |
+| Black      | #000000 |
+| Blue       | #0000FF |
+| GhostWhite | #F8F8FF |
+| LightCyan  | #E0FFFF |
+| Red        | #FF0000 |
+
+
+
+## HTML脚本
+
+JavaScript 使 HTML 页面具有更强的动态和交互性。
+
+- \<script> 标签用于定义客户端脚本，比如 JavaScript。
+
+- \<script> 元素既可包含脚本语句，也可通过 src 属性指向外部脚本文件。
+
+
+JavaScript 最常用于图片操作、表单验证以及内容动态更新。
+
+```html
+<script>
+	document.write("Hello World!");
+</script>
+```
+
+- \<noscript> 标签提供无法使用脚本时的替代内容，比方在浏览器禁用脚本时，或浏览器不支持客户端脚本时。
+
+- \<noscript>元素可包含普通 HTML 页面的 body 元素中能够找到的所有元素。
+
+只有在浏览器不支持脚本或者禁用脚本时，才会显示 \<noscript> 元素中的内容：
+
+```html
+<script>
+	document.write("Hello World!")
+</script>
+<noscript>抱歉，你的浏览器不支持 JavaScript!</noscript>
+```
+
+
+
+实例：
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>document.write("<p>这是一个段落。</p>");</script>
+
+    <p id="demo"> JavaScript 可以触发事件，就像按钮点击。</p>
+    <script>
+        function myFunction()
+        {
+            document.getElementById("demo").innerHTML="Hello JavaScript!";
+        }
+    </script>
+
+    <button type="button" onclick="myFunction()">点我！</button>
+
+</body>
+</html>
+```
+
+
+
+## HTML字符实体
+
+HTML 中的预留字符必须被替换为字符实体。
+
+一些在键盘上找不到的字符也可以使用字符实体来替换。
+
+在 HTML 中不能使用小于号（<）和大于号（>），这是因为浏览器会误认为它们是标签。
+
+如果希望正确地显示预留字符，我们必须在 HTML 源代码中使用字符实体（character entities）。 
+
+如需显示小于号，我们必须这样写：**&lt** 或 **&#60** 或 **&#060**
+
+
+
+**不间断空格(Non-breaking Space)**
+
+HTML 中的常用字符实体是不间断空格(`&nbsp;`)。
+
+浏览器总是会截短 HTML 页面中的空格。如果您在文本中写 10 个空格，在显示该页面之前，浏览器会删除它们中的 9 个。如需在页面中增加空格的数量，您需要使用 `&nbsp; `字符实体。
+
+
+
+**结合音标符**
+
+发音符号是加到字母上的一个"glyph(字形)"。
+
+一些变音符号, 如 尖音符 ( ̀) 和 抑音符 ( ́) 。
+
+变音符号可以出现字母的上面和下面，或者字母里面，或者两个字母间。
+
+变音符号可以与字母、数字字符的组合来使用。
+
+| 音标符 | 字符 | Construct | 输出结果 |
+| :----- | :--- | :-------- | :------- |
+| ̀       | a    | `a&#768;` | à        |
+| ́       | a    | `a&#769;` | á        |
+| ̂       | a    | `a&#770;` | â        |
+| ̃       | a    | `a&#771;` | ã        |
+| ̀       | O    | `O&#768;` | Ò        |
+| ́       | O    | `O&#769;` | Ó        |
+| ̂       | O    | `O&#770;` | Ô        |
+| ̃       | O    | `O&#771;` | Õ        |
+
+
+
+**字符实体**
+
+| 显示结果 | 描述        | 实体名称            | 实体编号  |
+| :------- | :---------- | :------------------ | :-------- |
+|          | 空格        | `&nbsp;`            | `&#160;`  |
+| <        | 小于号      | `&lt;`              | `&#60;`   |
+| >        | 大于号      | `&gt;`              | `&#62;`   |
+| &        | 和号        | `&amp;`             | `&#38;`   |
+| "        | 引号        | `&quot;`            | `&#34;`   |
+| '        | 撇号        | `&apos;` (IE不支持) | `&#39;`   |
+| ￠       | 分          | `&cent;`            | `&#162;`  |
+| £        | 镑          | `&pound;`           | `&#163;`  |
+| ¥        | 人民币/日元 | `&yen;`             | `&#165;`  |
+| €        | 欧元        | `&euro;`            | `&#8364;` |
+| §        | 小节        | `&sect;`            | `&#167;`  |
+| ©        | 版权        | `&copy;`            | `&#169;`  |
+| ®        | 注册商标    | `&reg;`             | `&#174;`  |
+| ™        | 商标        | `&trade;`           | `&#8482;` |
+| ×        | 乘号        | `&times;`           | `&#215;`  |
+| ÷        | 除号        | `&divide;`          | `&#247;`  |
+
+虽然 html 不区分大小写，但实体字符对大小写敏感。
+
+
+
+## HTML URL
+
+统一资源定位器(Uniform Resource Locators)
+
+URL 是一个网页地址。
+
+URL可以由字母组成，如"runoob.com"，或互联网协议（IP）地址： 192.68.20.50。大多数人进入网站使用网站域名来访问，因为 名字比数字更容易记住。
+
+一个统一资源定位器(URL) 用于定位万维网上的文档。
+
+一个网页地址实例: http://www.runoob.com/html/html-tutorial.html 语法规则:
+
+```
+scheme://host.domain:port/path/filename
+```
+
+说明:
+
+- - scheme - 定义因特网服务的类型。最常见的类型是 http
+    - host - 定义域主机（http 的默认主机是 www）
+    - domain - 定义因特网域名，比如 runoob.com
+    - :port - 定义主机上的端口号（http 的默认端口号是 80）
+    - path - 定义服务器上的路径（如果省略，则文档必须位于网站的根目录中）。
+    - filename - 定义文档/资源的名称
+
+
+
+**常见的 URL Scheme**
+
+以下是一些URL scheme：
+
+| Scheme | 访问               | 用于...                             |
+| :----- | :----------------- | :---------------------------------- |
+| http   | 超文本传输协议     | 以 http:// 开头的普通网页。不加密。 |
+| https  | 安全超文本传输协议 | 安全网页，加密所有信息交换。        |
+| ftp    | 文件传输协议       | 用于将文件下载或上传至网站。        |
+| file   |                    | 您计算机上的文件。                  |
+
+
+
+## 速查列表
+
+HTML 基本文档
+
+```html
+<!DOCTYPE html> 
+<html> 
+    <head> 
+        <title>文档标题</title> 
+    </head> 
+    <body> 
+        可见文本... 
+    </body> 
+</html>
+```
+
+
+
+基本标签（Basic Tags）
+
+```html
+<h1>最大的标题</h1> 
+<h2> . . . </h2> 
+<h3> . . . </h3> 
+<h4> . . . </h4> 
+<h5> . . . </h5> 
+<h6>最小的标题</h6>   
+<p>这是一个段落。</p> 
+<br> （换行） 
+<hr> （水平线） 
+<!-- 这是注释 -->
+```
+
+
+
+文本格式化（Formatting）
+
+```html
+<b>粗体文本</b> 
+<code>计算机代码</code> 
+<em>强调文本</em> 
+<i>斜体文本</i> 
+<kbd>键盘输入</kbd>  
+<pre>预格式化文本</pre> 
+<small>更小的文本</small> 
+<strong>重要的文本</strong>   
+<abbr> （缩写） 
+<address> （联系信息） 
+<bdo> （文字方向） 
+<blockquote> （从另一个源引用的部分） 
+<cite> （工作的名称） 
+<del> （删除的文本） 
+<ins> （插入的文本） 
+<sub> （下标文本） 
+<sup> （上标文本）
+```
+
+
+
+链接（Links）
+
+```html
+普通的链接：<a href="http://www.example.com/">链接文本</a> 
+图像链接： <a href="http://www.example.com/"><img src="URL" alt="替换文本"></a> 
+邮件链接： <a href="mailto:webmaster@example.com">发送e-mail</a> 
+书签： 
+<a id="tips">提示部分</a> 
+<a href="#tips">跳到提示部分</a>
+```
+
+
+
+图片（Images）
+
+```html
+<img src="URL" alt="替换文本" height="42" width="42">
+```
+
+
+
+样式/区块（Styles/Sections）
+
+```html
+<style type="text/css">
+    h1 {color:red;} 
+    p {color:blue;}
+</style> 
+<div>文档中的块级元素</div> 
+<span>文档中的内联元素</span>
+```
+
+
+
+无序列表
+
+```html
+<ul>    
+    <li>项目</li>    
+    <li>项目</li> 
+</ul>
+```
+
+
+
+有序列表
+
+```html
+<ol>    
+    <li>第一项</li>    
+    <li>第二项</li> 
+</ol>
+```
+
+
+
+定义列表
+
+```html
+<dl>  
+    <dt>项目 1</dt>    
+    <dd>描述项目 1</dd>  
+    <dt>项目 2</dt>    
+    <dd>描述项目 2</dd> 
+</dl>
+```
+
+
+
+表格（Tables）
+
+```html
+<table border="1">   
+    <tr>     
+        <th>表格标题</th>     
+        <th>表格标题</th>   
+    </tr>   
+    <tr>     
+        <td>表格数据</td>     
+        <td>表格数据</td>   
+    </tr> 
+</table>
+```
+
+
+
+框架（Iframe）
+
+```html
+<iframe src="demo_iframe.htm"></iframe>
+```
+
+
+
+表单（Forms）
+
+```html
+<form action="demo_form.php" method="post/get"> 
+    <input type="text" name="email" size="40" maxlength="50"> 
+    <input type="password"> <input type="checkbox" checked="checked"> 
+    <input type="radio" checked="checked"> 
+    <input type="submit" value="Send"> 
+    <input type="reset"> 
+    input type="hidden"> 
+    <select> 
+        <option>苹果</option> 
+        <option selected="selected">香蕉</option> 
+        <option>樱桃</option> 
+    </select> 
+    <textarea name="comment" rows="60" cols="20"></textarea>  
+</form>
+```
+
+
+
+ 实体（Entities）
+
+```html
+&lt; 等同于 < 
+&gt; 等同于 > 
+&#169; 等同于 ©
+```
 
 
 

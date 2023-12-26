@@ -2,6 +2,8 @@ ctrl + alt + V 自动生成左边的接受变量
 
 ctrl + alt + L 格式化代码
 
+ctrl + alt + t 生成try..catch
+
 shift + enter 在当前行下方插入一行
 
 sout：输出语句

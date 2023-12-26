@@ -1703,7 +1703,9 @@ mkdir mysql
 **4、将压缩包解压到创建的mysql文件夹中**
 
 ```bash
-tar -xvf mysql-8.0.33-1.el8.x86_64.rpm-bundle.tar -C mysql
+gzip mysql-8.0.24-1.el7.x86_64.rpm-bundle.tar
+
+tar -xvf mysql-8.0.33-1.el8.x86_64.rpm-bundle.tar.gz -C mysql
 ```
 
 **5、进入目录，查看有哪些安装包**
@@ -4365,6 +4367,958 @@ source /rootx/xxxx.sql
 
 
 
+# 运维
+
+## 1、日志
+
+ 
+
+### 错误日志
+
+错误日志是 MySQL 中最重要的日志之一，它记录了当 mysqld 启动和停止时，以及服务器在运行过 程中发生任何严重错误时的相关信息。当数据库出现任何故障导致无法正常使用时，建议首先查看此日志。 
+
+该日志是默认开启的，默认存放目录 `/var/log/`，默认的日志文件名为 `mysqld.log` 。查看日志 位置：
+
+```mysql
+show variables like '%log_error%';
+```
+
+![image-20231117233252813](assets/image-20231117233252813.png)
+
+
+
+
+
+### 二进制日志
+
+二进制日志（BINLOG）记录了所有的 DDL（数据定义语言）语句和 DML（数据操纵语言）语句，但不包括数据查询（SELECT、SHOW）语句。 
+
+作用：①. 灾难时的数据恢复；②. MySQL的主从复制。在 MySQL8 版本中，默认二进制日志是开启的，默认存放目录 `/var/lib/mysql/binlog`，涉及到的参数如下：
+
+```mysql
+show variables like '%log_bin%';
+```
+
+![image-20231117233615267](assets/image-20231117233615267.png)
+
+参数说明：
+
+`log_bin_basename`：当前数据库服务器的 `binlog` 日志的基础名称(前缀)，具体的binlog文 件名需要再该basename的基础上加上编号(编号从000001开始)。
+
+`log_bin_index`：binlog的索引文件，里面记录了当前服务器关联的 binlog 文件有哪些。
+
+
+
+#### 记录格式
+
+**二进制日志的记录格式：**
+
+| 日志格式  | 含义                                                         |
+| --------- | ------------------------------------------------------------ |
+| STATEMENT | 基于SQL语句的日志记录，记录的是SQL语句，对数据进行修改的SQL都会记录在 日志文件中。 |
+| ROW       | 基于行的日志记录，记录的是每一行的数据变更。（默认）         |
+| MIXED     | 混合了STATEMENT和ROW两种格式，默认采用STATEMENT，在某些特殊情况下会 自动切换为ROW进行记录。 |
+
+```mysql
+show variables like '%binlog_format%';
+```
+
+![image-20231117234841983](assets/image-20231117234841983.png)
+
+如果我们需要配置二进制日志的格式，只需要在 `/etc/my.cnf` 中配置 `binlog_format` 参数即可。
+
+```
+binlog_format=STATEMENT;
+```
+
+
+
+#### 查看二进制日志
+
+由于日志是以二进制方式存储的，不能直接读取，需要通过二进制日志查询工具 mysqlbinlog 来查看，具体语法：
+
+```mysql
+mysqlbinlog [ 参数选项 ] logfilename
+```
+
+参数选项：
+
+- `-d`    指定数据库名称，只列出指定的数据库相关操作。
+- `-o`    忽略掉日志中的前n行命令。
+- `-v`    将行事件(数据变更)重构为SQL语句
+- `-vv`  将行事件(数据变更)重构为SQL语句，并输出注释信息
+
+
+
+#### 删除二进制日志
+
+对于比较繁忙的业务系统，每天生成的binlog数据巨大，如果长时间不清除，将会占用大量磁盘空 间。可以通过以下几种方式清理日志：
+
+| 指令                                             | 含义                                                         |
+| ------------------------------------------------ | ------------------------------------------------------------ |
+| reset master                                     | 删除全部 binlog 日志，删除之后，<br />日志编号将 从 binlog.000001重新开始 |
+| purge master logs to 'binlog.*'                  | 删除 * 编号之前的所有日志                                    |
+| purge master logs before 'yyyy-mm-dd hh24:mi:ss' | 删除日志为 "yyyy-mm-dd hh24:mi:ss" 之前 产生的所有日志       |
+
+也可以在mysql的配置文件中配置二进制日志的过期时间，设置了之后，二进制日志过期会自动删除。
+
+```mysql
+show variables like '%binlog_expire_logs_seconds%';
+```
+
+![image-20231117235625644](assets/image-20231117235625644.png)
+
+默认为 30 天
+
+
+
+### 查询日志
+
+查询日志中记录了客户端的所有操作语句，而二进制日志不包含查询数据的SQL语句。默认情况下， 查询日志是未开启的。
+
+```mysql
+show variables like '%general%';
+```
+
+![image-20231117235837831](assets/image-20231117235837831.png)
+
+如果需要开启查询日志，可以修改MySQL的配置文件 `/etc/my.cnf` 文件，添加如下内容：
+
+```bash
+#该选项用来开启查询日志 ， 可选值 ： 0 或者 1 ； 0 代表关闭， 1 代表开启
+general_log=1
+#设置日志的文件名 ， 如果没有指定， 默认的文件名为 host_name.log
+general_log_file=mysql_query.log
+```
+
+开启了查询日志之后，在MySQL的数据存放目录，也就是 `/var/lib/mysql/` 目录下就会出现 `mysql_query.log` 文件。之后所有的客户端的增删改查操作都会记录在该日志文件之中，长时间运行后，该日志文件将会非常大。
+
+
+
+### 慢查询日志
+
+慢查询日志记录了所有执行时间超过参数 `long_query_time` 设置值并且扫描记录数不小于 `min_examined_row_limit` 的所有的SQL语句的日志，默认未开启。
+
+`long_query_time` 默认为 10 秒，最小为 0， 精度可以到微秒。 
+
+如果需要开启慢查询日志，需要在MySQL的配置文件 `/etc/my.cnf` 中配置如下参数：
+
+```bash
+#慢查询日志
+slow_query_log=1
+#执行时间参数
+long_query_time=2
+```
+
+默认情况下，不会记录管理语句，也不会记录不使用索引进行查找的查询。
+
+可以使用 `log_slow_admin_statements` 和 更改 `log_queries_not_using_indexes`，如下所述。
+
+```bash
+#记录执行较慢的管理语句
+log_slow_admin_statements=1
+#记录执行较慢的未使用索引的语句
+log_queries_not_using_indexes=1
+```
+
+
+
+
+
+## 2、主从复制
+
+### 概述
+
+主从复制是指将主数据库的 DDL 和 DML 操作通过二进制日志传到从库服务器中，然后在从库上对这 些日志重新执行（也叫重做），从而使得从库和主库的数据保持同步。
+
+MySQL支持一台主库同时向多台从库进行复制， 从库同时也可以作为其他从服务器的主库，实现链状复制。
+
+![image-20231118001345447](assets/image-20231118001345447.png)
+
+MySQL 复制的优点主要包含以下三个方面： 
+
+- 主库出现问题，可以快速切换到从库提供服务。 
+
+- 实现读写分离，降低主库的访问压力。 
+
+- 可以在从库中执行备份，以避免备份期间影响主库服务。
+
+==读写分离：增删改的请求操作主库，查询的请求操作从库==
+
+
+
+### 原理
+
+MySQL主从复制的核心就是 **二进制日志**，具体的过程如下
+
+![image-20231118001911329](assets/image-20231118001911329.png)
+
+从上图来看，复制分成三步： 
+
+1. Master 主库在事务提交时，会把数据变更记录在二进制日志文件 Binlog 中。 
+2. 从库读取主库的二进制日志文件 Binlog ，写入到从库的中继日志 Relay Log 。 
+3. slave重做中继日志中的事件，将改变反映它自己的数据。
+
+
+
+### 搭建
+
+1、服务器准备
+
+![image-20231118014138837](assets/image-20231118014138837.png)
+
+```bash
+# 开放指定的3306端口
+firewall-cmd --zone=public --add-port=3306/tcp -permanent
+firewall-cmd -reload
+
+# 关闭防火墙
+systemctl stop firewalld
+systemctl disable firewalld
+```
+
+准备好两台服务器之后，在上述的两台服务器中分别安装好MySQL，并完成基础的初始化准备(安装、 密码配置等操作)工作。 其中： 
+
+- 192.168.88.200 作为主服务器master 
+- 192.168.88.201 作为从服务器slave
+
+
+
+2、主库配置（192.168.88.200）
+
+1. 修改配置文件 `/etc/my.cnf`
+
+    ```bash
+    #mysql 服务ID，保证整个集群环境中唯一，取值范围：1 – 2^32-1，默认为1
+    server-id=1
+    #是否只读,1 代表只读, 0 代表读写
+    read-only=0
+    #忽略的数据, 指不需要同步的数据库
+    #binlog-ignore-db=mysql
+    #指定同步的数据库
+    #binlog-do-db=db01
+    ```
+
+2. 重启MySQL服务器
+
+    ```bash
+     systemctl restart mysqld
+    ```
+
+3. 登录mysql，创建远程连接的账号，并授予主从复制权限
+
+    ```mysql
+    #创建itcast用户，并设置密码，该用户可在任意主机连接该MySQL服务
+    CREATE USER 'itcast'@'%' IDENTIFIED WITH mysql_native_password BY 'Root@123456';
+    
+    #为 'itcast'@'%' 用户分配主从复制权限
+    GRANT REPLICATION SLAVE ON *.* TO 'itcast'@'%';
+    ```
+
+4. 通过指令，查看二进制日志坐标
+
+    ```mysql
+    show master status ;
+    ```
+
+    ![image-20231118014900667](assets/image-20231118014900667.png)
+
+    字段含义说明： 
+
+    file :  从哪个日志文件开始推送日志文件
+
+    position ： 从哪个位置开始推送日志 
+
+    binlog_ignore_db : 指定不需要同步的数据库
+
+
+
+3、从库配置（192.168.88.201）
+
+1. 修改配置文件 `/etc/my.cnf`
+
+    ```bash
+    #mysql 服务ID，保证整个集群环境中唯一，取值范围：1 – 2^32-1，和主库不一样即可
+    server-id=2
+    #是否只读,1 代表只读, 0 代表读写
+    read-only=1
+    # 以下命令只对普通用户有用，禁用超级管理员的权限
+    # super-read-only=1
+    ```
+
+2. 重新启动MySQL服务
+
+    ```bash
+    systemctl restart mysqld
+    ```
+
+3. 登录mysql，设置主库配置
+
+    ```bash
+    CHANGE REPLICATION SOURCE TO SOURCE_HOST='192.168.88.200', SOURCE_USER='itcast',
+    SOURCE_PASSWORD='Root@123456', SOURCE_LOG_FILE='binlog.000003',
+    SOURCE_LOG_POS=664;
+    ```
+
+    上述是8.0.23中的语法。如果mysql是 8.0.23 之前的版本，执行如下SQL：
+
+    ```mysql
+    CHANGE MASTER TO MASTER_HOST='192.168.88.200', MASTER_USER='itcast',
+    MASTER_PASSWORD='Root@123456', MASTER_LOG_FILE='binlog.000003',
+    MASTER_LOG_POS=664;
+    ```
+
+    | 参数名          | 含义               | 8.0.23之前      |
+    | --------------- | ------------------ | --------------- |
+    | SOURCE_HOST     | 主库IP地址         | MASTER_HOST     |
+    | SOURCE_USER     | 连接主库的用户名   | MASTER_USER     |
+    | SOURCE_PASSWORD | 连接主库的密码     | MASTER_PASSWORD |
+    | SOURCE_LOG_FILE | binlog日志文件名   | MASTER_LOG_FILE |
+    | SOURCE_LOG_POS  | binlog日志文件位置 | MASTER_LOG_POS  |
+
+4. 开启同步操作
+
+    ```mysql
+    start replica ; #8.0.22之后
+    start slave ; #8.0.22之前
+    ```
+
+5. 查看主从同步状态
+
+    ```mysql
+    show replica status ; #8.0.22之后
+    show slave status ; #8.0.22之前
+    ```
+
+    ![image-20231118015737949](assets/image-20231118015737949.png)
+
+
+
+4、测试
+
+1. 在主库 192.168.88.200 上创建数据库、表，并插入数据
+
+    ```mysql
+    create database db01;
+    use db01;
+    
+    create table tb_user(
+    	id int(11) primary key not null auto_increment,
+    	name varchar(50) not null,
+    	sex varchar(1)
+    )engine=innodb default charset=utf8mb4;
+    
+    insert into tb_user(id,name,sex) values(null,'Tom', '1'),(null,'Trigger','0'),(null,'Dawn','1');
+    ```
+
+2. 在从库 192.168.200.201 中查询数据，验证主从是否同步
+
+
+
+
+
+## 3、分库分表
+
+![image-20231118020355207](assets/image-20231118020355207.png)
+
+随着互联网及移动互联网的发展，应用系统的数据量也是成指数式增长，若采用单数据库进行数据存储，存在以下性能瓶颈：
+
+1. IO瓶颈：热点数据太多，数据库缓存不足，产生大量磁盘IO，效率较低。 请求数据太多，带宽不够，网络IO瓶颈。 
+2. CPU瓶颈：排序、分组、连接查询、聚合统计等SQL会耗费大量的CPU资源，请求数太多，CPU出现瓶颈。
+
+
+
+为了解决上述问题，我们需要对数据库进行分库分表处理。
+
+![image-20231118020516591](assets/image-20231118020516591.png)
+
+==分库分表的中心思想都是将数据分散存储，使得单一数据库/表的数据量变小来缓解单一数据库的性能问题，从而达到提升数据库性能的目的。==
+
+
+
+### 拆分策略
+
+分库分表的形式，主要是两种：**垂直拆分和水平拆分**。而拆分的粒度，一般又分为分库和分表，所以组成的拆分策略最终如下：
+
+![image-20231118020648944](assets/image-20231118020648944.png)
+
+==分库、分表是在拆分粒度方面不同，垂直、水平是在拆分维度方面不同。==
+
+分库：对一个数据库进行拆分，将一个数据库当中的数据分散的存储在多个数据库当中
+
+分表：对表结构进行拆分，将一张表结构中的数据分散的存储在多张表结构当中
+
+
+
+==水平拆数据，垂直拆结构==
+
+垂直拆分：
+
+- **垂直分库**：以表为依据，根据业务不同将不同表拆分到不同库中。
+
+    将数据库中的不同的表拆分到不同的服务器当中去
+
+    <img src="assets/image-20231118144410627.png" alt="image-20231118144410627" style="zoom: 67%;" />
+
+    特点：
+
+    - 每个库的表结构都不一样。
+    - 每个库的数据也不一样。
+    - 所有库的并集是全量数据。
+
+- **垂直分表**：以字段为依据，根据字段属性将不同字段拆分到不同表中。
+
+    垂直分表拆分的表结构
+
+    <img src="assets/image-20231118144940480.png" alt="image-20231118144940480" style="zoom:67%;" />![image-20231118145845684](assets/image-20231118145845684.png)
+
+    特点：
+
+    - 每个表的结构都不一样。
+    - 每个表的数据也不一样，一般通过一列（主键/外键）关联。
+    - 所有表的并集是全量数据。
+
+
+
+水平拆分：
+
+- **水平分库**：以字段为依据，按照一定策略，将一个库的数据拆分到多个库中。
+
+    <img src="assets/image-20231118145944200.png" alt="image-20231118145944200" style="zoom:67%;" />
+
+    特点：
+
+    - 每个库的表结构都一样。
+    - 每个库的数据都不一样。
+    - 所有库的并集是全量数据。
+
+- **水平分表**：以字段为依据，按照一定策略，将一个表的数据拆分到多个表中。
+
+    <img src="assets/image-20231118150249143.png" alt="image-20231118150249143" style="zoom:67%;" />
+
+    特点：
+
+    - 每个表的表结构都一样。
+    - 每个表的数据都不一样。
+    - 所有表的并集是全量数据。
+
+
+
+### 实现技术
+
+- shardingJDBC：基于AOP原理，在应用程序中对本地执行的SQL进行拦截，解析、改写、路由处理。需要自行编码配置实现，只支持java语言，性能较高。 
+- MyCat：数据库分库分表中间件，不用调整代码即可实现分库分表，支持多种语言，性能不及前者。
+
+![image-20231118150627592](assets/image-20231118150627592.png)
+
+本次课程，我们选择了是MyCat数据库中间件，通过MyCat中间件来完成分库分表操作。
+
+中间件：使用了MyCat之后，应用程序不需要改动，不需要考虑每一次应该考虑哪一个数据库，操作哪一个数据库，不用集成其他的第三方依赖，也不用做其他的编码和配置。我们的应用程序只需要访问MyCat即可，用户访问MyCat就像访问Mysql一样。
+
+
+
+## 4、MyCat
+
+### 概述
+
+- 介绍 
+
+Mycat是开源的、活跃的、基于Java语言编写的MySQL数据库中间件。可以像使用mysql一样来使用 mycat，对于开发人员来说根本感觉不到mycat的存在。
+
+==原理：伪装协议==
+
+开发人员只需要连接MyCat即可，而具体底层用到几台数据库，每一台数据库服务器里面存储了什么数据，都无需关心。 具体的分库分表的策略，只需要在MyCat中配置即可。
+
+
+
+优势：
+
+- 性能可靠稳定 
+- 强大的技术团队 
+- 体系完善 
+- 活跃
+
+<img src="assets/image-20231118151216854.png" alt="image-20231118151216854" style="zoom: 50%;" />
+
+### 下载
+
+下载地址：[Releases · MyCATApache/Mycat-Server (github.com)](https://github.com/MyCATApache/Mycat-Server/releases)
+
+
+
+### 安装
+
+Mycat 是采用 java 语言开发的开源的数据库中间件，支持Windows和Linux运行环境，下面介绍 MyCat的Linux中的环境搭建。我们需要在准备好的服务器中安装如下软件。
+
+- MySQL 
+- JDK 
+- Mycat
+
+| 服务器         | 安装软件   | 说明              |
+| -------------- | ---------- | ----------------- |
+| 192.168.88.200 | JDK、Mycat | MyCat中间件服务器 |
+| 192.168.88.200 | MySQL      | 分片服务器        |
+| 192.168.88.201 | MySQL      | 分片服务器        |
+| 192.168.88.202 | MySQL      | 分片服务器        |
+
+
+
+1、在三台服务器中安装Mysql服务器，注意：使用克隆虚拟机的方式要修改 Mysql 的 UUID
+
+**2、在 192.168.88.200 中安装 JDK**
+
+1. 上传 JDK 和 MyCat
+
+    ![image-20231118154334697](assets/image-20231118154334697.png)
+
+2. 安装JDK
+
+    ```bash
+    [root@mysql ~]# mkdir /opt/jdk
+    [root@mysql ~]# tar -zxvf jdk-8u361-linux-x64.tar.gz -C /opt/jdk/
+    ```
+
+3. 配置环境变量
+
+    修改 `/etc/profile` 文件，
+
+    ```bash
+    vim /etc/profile
+    ```
+
+    在文件末尾加入如下配置
+
+    ```bash
+    export JAVA_HOME=/opt/jdk/jdk1.8.0_361
+    export PATH=$PATH:$JAVA_HOME/bin
+    ```
+
+    刷新环境变量
+
+    ```bash
+    source /etc/profile
+    ```
+
+4. 验证 JDK
+
+    ```bash
+    # 删除系统自带的java程序
+    rm -f /usr/bin/java
+    ```
+
+软链接我们自己安装的java程序
+
+    ln -s /opt/jdk/jdk1.8.0_361/bin/java /usr/bin/java
+    
+    [root@mysql jdk]# java -version
+    java version "1.8.0_361"
+    Java(TM) SE Runtime Environment (build 1.8.0_361-b09)
+    Java HotSpot(TM) 64-Bit Server VM (build 25.361-b09, mixed mode)
+    ```
+
+
+**3、在 192.168.88.200 中安装 MyCat**
+
+1. 解压
+
+    ```bash
+    [root@mysql ~]# mkdir /opt/Mycat
+    [root@mysql ~]# tar -zxvf Mycat-server-1.6.7.4-release-20200105164103-linux.tar.gz -C /opt/Mycat/
+    ```
+
+2. 替换 mysql 连接的驱动包
+
+    ```bash
+    cd mycat/lib
+    ```
+
+    下载与Mysql版本对应的jar包： [MySQL :: Download MySQL Connector/J (Archived Versions)](https://downloads.mysql.com/archives/c-j/)
+
+    ![image-20231118205703888](assets/image-20231118205703888.png)
+
+    解压后，将原来的jar包删除，上传下载的jar包，并更改权限
+
+    ```bash
+    [root@mysql ~]# cd /opt/Mycat/mycat/lib/
+    [root@mysql lib]# rm -rf mysql-connector-java-5.1.35.jar
+    [root@mysql lib]# rz -E
+    [root@mysql lib]# chmod 777 mysql-connector-java-8.0.33.jar 
+    ```
+
+    
+
+目录结构：
+
+bin : 存放可执行文件，用于启动停止mycat 
+
+conf：存放mycat的配置文件 
+
+lib：存放mycat的项目依赖包（jar） 
+
+logs：存放mycat的日志文件
+
+![image-20231118155705086](assets/image-20231118155705086.png)
+
+
+
+### 核心概念
+
+![image-20231118210724127](assets/image-20231118210724127.png)
+
+MyCat 不存储数据，只存储分片规则
+
+在 MyCat 的逻辑结构主要负责逻辑库、逻辑表、分片规则、分片节点等逻辑结构的处理，而具体的数据存储还是在物理结构，也就是数据库服务器中存储的。
+
+
+
+### Mycat 入门
+
+需求 
+
+由于 tb_order 表中数据量很大，磁盘IO及容量都到达了瓶颈，现在需要对 tb_order 表进行数据分片，分为三个数据节点，每一个节点主机位于不同的服务器上, 具体的结构，参考下图：
+
+<img src="assets/image-20231118212436187.png" alt="image-20231118212436187" style="zoom:50%;" />
+
+环境准备
+
+准备3台服务器： （关闭防火墙）
+
+192.168.88.200：MyCat中间件服务器，同时也是第一个分片服务器。 
+
+192.168.88.201：第二个分片服务器。 
+
+192.168.88.202：第三个分片服务器。
+
+<img src="assets/image-20231118212507053.png" alt="image-20231118212507053" style="zoom:50%;" />
+
+并且在上述3台数据库中创建数据库 db01 。
+
+
+
+1、在 3 台数据库中都创建数据库 db01
+
+![image-20231118213036908](assets/image-20231118213036908.png)
+
+2、分片配置
+
+1. 使用Notepad++，下载插件NppFTP
+
+    ![image-20231118213418119](assets/image-20231118213418119.png)
+
+    ![image-20231118213455100](assets/image-20231118213455100.png)
+
+    <img src="assets/image-20231118213925963.png" alt="image-20231118213925963" style="zoom:80%;" />
+
+    ![image-20231118213638165](assets/image-20231118213638165.png)
+
+2.  schema.xml
+
+    在schema.xml中配置逻辑库、逻辑表、数据节点、节点主机等相关信息。具体的配置如下：
+
+    ```xml
+    <?xml version="1.0"?>
+    <!DOCTYPE mycat:schema SYSTEM "schema.dtd">
+    <mycat:schema xmlns:mycat="http://io.mycat/">
+    
+    	<schema name="DB01" checkSQLschema="true" sqlMaxLimit="100" randomDataNode="dn1">
+    		<table name="TB_ORDER" dataNode="dn1,dn2,dn3" rule="auto-sharding-long" splitTableNames ="true"/>
+    	</schema>
+    
+    	<dataNode name="dn1" dataHost="dhost1" database="db01" />
+    	<dataNode name="dn2" dataHost="dhost2" database="db01" />
+    	<dataNode name="dn3" dataHost="dhost3" database="db01" />
+    	
+    	<dataHost name="dhost1" maxCon="1000" minCon="10" balance="0"
+    			  writeType="0" dbType="mysql" dbDriver="jdbc" switchType="1"  slaveThreshold="100">
+    		<heartbeat>select user()</heartbeat>
+    
+    		<writeHost host="master" url="jdbc:mysql://192.168.88.200:3306?useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8" user="root"
+    				   password="123456">
+    		</writeHost>
+    	</dataHost>
+    	
+    	<dataHost name="dhost2" maxCon="1000" minCon="10" balance="0"
+    			  writeType="0" dbType="mysql" dbDriver="jdbc" switchType="1"  slaveThreshold="100">
+    		<heartbeat>select user()</heartbeat>
+    
+    		<writeHost host="master" url="jdbc:mysql://192.168.88.201:3306?useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8" user="root"
+    				   password="123456">
+    		</writeHost>
+    	</dataHost>
+    	
+    	<dataHost name="dhost3" maxCon="1000" minCon="10" balance="0"
+    			  writeType="0" dbType="mysql" dbDriver="jdbc" switchType="1"  slaveThreshold="100">
+    		<heartbeat>select user()</heartbeat>
+    
+    		<writeHost host="master" url="jdbc:mysql://192.168.88.202:3306?useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8" user="root"
+    				   password="123456">
+    		</writeHost>
+    	</dataHost>
+    </mycat:schema>
+    ```
+
+3. server.xml
+
+    需要在server.xml中配置用户名、密码，以及用户的访问权限信息，具体的配置如下：
+
+    ```xml
+    <user name="root" defaultAccount="true">
+        <property name="password">123456</property>
+        <property name="schemas">DB01</property>
+    </user>
+    
+    <user name="user">
+        <property name="password">123456</property>
+        <property name="schemas">DB01</property>
+        <property name="readOnly">true</property>
+    </user>
+    ```
+
+    上述的配置表示，定义了两个用户 root 和 user ，这两个用户都可以访问 DB01 这个逻辑库，访 问密码都是123456，但是root用户访问DB01逻辑库，既可以读，又可以写，但是 user用户访问 DB01逻辑库是只读的。
+
+
+
+### 测试
+
+- 启动服务
+
+    配置完毕后，先启动涉及到的3台分片服务器，然后启动MyCat服务器。切换到Mycat的安装目录，执行如下指令，启动Mycat：
+
+    ```bash
+    #启动
+    bin/mycat start
+    #停止
+    bin/mycat stop
+    ```
+
+    Mycat启动之后，占用端口号 8066。 
+
+    启动完毕之后，可以查看logs目录下的启动日志，查看Mycat是否启动完成。
+
+    ```bash
+    tail -f logs/wrapper.log
+    
+    # 出现如下信息，表示启动成功
+    INFO   | jvm 1    | 2023/11/18 21:54:48 | MyCAT Server startup successfully. see logs in logs/mycat.log
+    ```
+
+- 分片测试
+
+    通过如下指令，就可以连接并登陆MyCat。
+
+    ```bash
+    mysql -h 192.168.88.200 -P 8066 -uroot -p123456
+    
+    Server version: 5.6.29-mycat-1.6.7.4-release-20200105164103 MyCat Server (OpenCloudDB)
+    
+    mysql> show databases;
+    +----------+
+    | DATABASE |
+    +----------+
+    | DB01     |
+    +----------+
+    1 row in set (0.00 sec)
+    
+    mysql> use DB01;
+    Reading table information for completion of table and column names
+    You can turn off this feature to get a quicker startup with -A
+    
+    Database changed
+    mysql> show tables;
+    +----------------+
+    | Tables in DB01 |
+    +----------------+
+    | tb_order       |
+    +----------------+
+    1 row in set (0.00 sec)
+    ```
+
+    **tb_order 目前只在逻辑上存在。**
+
+- 数据测试
+
+    在MyCat中来创建表，并往表结构中插入数据，查看数据在MySQL中的分布情况。
+
+    当我们创建了 TB_ORDER 之后，在 3 台Mysql中才真正有了这张表
+
+    ```mysql
+    CREATE TABLE TB_ORDER (
+        id BIGINT(20) NOT NULL,
+        title VARCHAR(100) NOT NULL ,
+        PRIMARY KEY (id)
+    ) ENGINE=INNODB DEFAULT CHARSET=utf8 ;
+    
+    INSERT INTO TB_ORDER(id,title) VALUES(1,'goods1');
+    INSERT INTO TB_ORDER(id,title) VALUES(2,'goods2');
+    INSERT INTO TB_ORDER(id,title) VALUES(3,'goods3');
+    
+    INSERT INTO TB_ORDER(id,title) VALUES(1,'goods1');
+    INSERT INTO TB_ORDER(id,title) VALUES(2,'goods2');
+    INSERT INTO TB_ORDER(id,title) VALUES(3,'goods3');
+    
+    INSERT INTO TB_ORDER(id,title) VALUES(5000000,'goods5000000');
+    INSERT INTO TB_ORDER(id,title) VALUES(10000000,'goods10000000');
+    INSERT INTO TB_ORDER(id,title) VALUES(10000001,'goods10000001');
+    INSERT INTO TB_ORDER(id,title) VALUES(15000000,'goods15000000');
+    INSERT INTO TB_ORDER(id,title) VALUES(15000001,'goods15000001');
+    ```
+
+    
+
+经过测试，我们发现，在往 TB_ORDER 表中插入数据时： 
+
+- 如果id的值在1-500w之间，数据将会存储在第一个分片数据库中。 
+
+- 如果id的值在500w-1000w之间，数据将会存储在第二个分片数据库中。 
+- 如果id的值在1000w-1500w之间，数据将会存储在第三个分片数据库中。 
+
+- 如果id的值超出1500w，在插入数据时，将会报错。 
+
+为什么会出现这种现象，数据到底落在哪一个分片服务器到底是如何决定的呢？ 
+
+这是由逻辑表配置时的一个参数 rule 决定的，而这个参数配置的就是分片规则，关于分片规则的配置，在后面的课程中会详细讲解。
+
+autopartition-long.txt
+
+```txt
+# range start-end ,data node index
+# K=1000,M=10000.
+0-500M=0
+500M-1000M=1
+1000M-1500M=2
+```
+
+
+
+### MyCat 配置文件
+
+1. schema.xml
+
+    schema.xml 作为MyCat中最重要的配置文件之一 , 涵盖了MyCat的逻辑库 、 逻辑表 、 分片规 则、分片节点及数据源的配置。
+
+    主要包含以下三组标签：
+
+    - schema标签 
+
+    - datanode标签 
+
+    - datahost标签
+
+    ![image-20231118221911941](assets/image-20231118221911941.png)
+
+
+
+schema标签
+
+1. schema 定义逻辑库
+
+    ![image-20231118222019463](assets/image-20231118222019463.png)
+
+    schema 标签用于定义 MyCat 实例中的逻辑库 , 一个 MyCat 实例中，可以有多个逻辑库，可以通过 schema 标签来划分不同的逻辑库。
+
+    MyCat中的逻辑库的概念，等同于MySQL中的database概念 , 需要操作某个逻辑库下的表时, 也需要切换逻辑库(use xxx)。
+
+    核心属性： 
+
+    - name：指定自定义的逻辑库库名 
+
+    - checkSQLschema：在SQL语句操作时指定了数据库名称，执行时是否自动去除；true：自动去除，false：不自动去除 
+
+    - sqlMaxLimit：如果未指定limit进行查询，列表查询模式查询多少条记录
+
+2. schema 中的table定义逻辑表
+
+    ![image-20231118222315839](assets/image-20231118222315839.png)
+
+    table 标签定义了MyCat中逻辑库schema下的逻辑表，所有需要拆分的表都需要在table标签中定义 。
+
+    核心属性： 
+
+    - name：定义逻辑表表名，在该逻辑库下唯一 
+
+    - dataNode：定义逻辑表所属的dataNode，该属性需要与dataNode标签中name对应；多个 dataNode逗号分隔 
+
+    - rule：分片规则的名字，分片规则名字是在rule.xml中定义的 
+
+    - primaryKey：逻辑表对应真实表的主键 
+
+    - type：逻辑表的类型，目前逻辑表只有全局表和普通表，如果未配置，就是普通表；全局表，配置为 global
+
+
+
+datanode标签
+
+![image-20231118222533824](assets/image-20231118222533824.png)
+
+核心属性： 
+
+- name：定义数据节点名称 
+
+- dataHost：数据库实例主机名称，引用自 dataHost 标签中name属性 
+
+- database：定义分片所属数据库
+
+
+
+datahost标签
+
+![image-20231118222635438](assets/image-20231118222635438.png)
+
+该标签在MyCat逻辑库中作为底层标签存在, 直接定义了具体的数据库实例、读写分离、心跳语句。 
+
+核心属性： 
+
+- name：唯一标识，供上层标签使用 
+
+- maxCon/minCon：最大连接数/最小连接数 
+
+- balance：负载均衡策略，取值 0,1,2,3 
+
+- writeType：写操作分发方式（0：写操作转发到第一个writeHost，第一个挂了，切换到第二 个；1：写操作随机分发到配置的writeHost） 
+
+- dbDriver：数据库驱动，支持 native、jdbc
+
+
+
+2. rule.xml
+
+    rule.xml中定义所有拆分表的规则, 在使用过程中可以灵活的使用分片算法, 或者对同一个分片算法 使用不同的参数, 它让分片过程可配置化。主要包含两类标签：tableRule、Function。
+
+    ![image-20231118222822987](assets/image-20231118222822987.png)
+
+
+
+3. server.xml
+
+    server.xml配置文件包含了MyCat的系统配置信息，主要有两个重要的标签：system、user。
+
+system标签
+
+![image-20231118224250481](assets/image-20231118224250481.png)
+
+主要配置MyCat中的系统配置信息，对应的系统配置项及其含义，如下：
+
+![image-20231118224333325](assets/image-20231118224333325.png)
+
+![image-20231118224344337](assets/image-20231118224344337.png)
+
+![image-20231118224416289](assets/image-20231118224416289.png)
+
+![image-20231118224557738](assets/image-20231118224557738.png)
+
+![image-20231118224603522](assets/image-20231118224603522.png)
+
+
+
+user标签
+
+配置MyCat中的用户、访问密码，以及用户针对于逻辑库、逻辑表的权限信息，具体的权限描述方式及 配置说明如下：
+
+![image-20231118224625118](assets/image-20231118224625118.png)
+
+在测试权限操作时，我们只需要将 privileges 标签的注释放开。 在 privileges 下的schema 标签中配置的dml属性配置的是逻辑库的权限。 
+
+在privileges的schema下的table标签的dml属性中配置逻辑表的权限。
 
 
 
@@ -4376,10 +5330,450 @@ source /rootx/xxxx.sql
 
 
 
+## 5、读写分离
+
+### 介绍
+
+读写分离，简单地说是把对数据库的读和写操作分开，以对应不同的数据库服务器。主数据库提供写操作，从数据库提供读操作，这样能有效地减轻单台数据库的压力。 
+
+通过MyCat即可轻易实现上述功能，不仅可以支持MySQL，也可以支持Oracle和SQL Server。
+
+![image-20231118225012900](assets/image-20231118225012900.png)
+
+### 一主一从
+
+原理：
+
+MySQL的主从复制，是基于二进制日志（binlog）实现的。
+
+![image-20231118225230105](assets/image-20231118225230105.png)
+
+准备：
+
+| 主机            | 角色   | 用户名 | 密码   |
+| --------------- | ------ | ------ | ------ |
+| 192.168.200.211 | master | root   | 123456 |
+| 192.168.200.212 | slave  | root   | 123456 |
 
 
 
+### 一主一从读写分离
 
+MyCat控制后台数据库的读写分离和负载均衡由 schema.xml 文件 datahost 标签的 balance 属性控 制。
+
+schema.xml
+
+```xml
+<!-- 配置逻辑库 -->
+<schema name="ITCAST_RW" checkSQLschema="true" sqlMaxLimit="100" dataNode="dn7">
+</schema>
+<dataNode name="dn7" dataHost="dhost7" database="itcast" />
+<dataHost name="dhost7" maxCon="1000" minCon="10" balance="1" writeType="0"
+          dbType="mysql" dbDriver="jdbc" switchType="1" slaveThreshold="100">
+    <heartbeat>select user()</heartbeat>
+    <writeHost host="master1" url="jdbc:mysql://192.168.200.211:3306?
+                                   useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8"
+               user="root" password="1234" >
+        <readHost host="slave1" url="jdbc:mysql://192.168.200.212:3306?
+                                     useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8"
+                  user="root" password="1234" />
+    </writeHost>
+</dataHost>
+```
+
+上述配置的具体关联对应情况如下：
+
+![image-20231118225910470](assets/image-20231118225910470.png)
+
+writeHost 代表的是写操作对应的数据库，readHost 代表的是读操作对应的数据库。 所以我们要想 实现读写分离，就得配置writeHost关联的是主库，readHost关联的是从库。 
+
+而仅仅配置好了 writeHost 以及 readHost 还不能完成读写分离，还需要配置一个非常重要的负责均衡的参数 balance，取值有4种，具体含义如下：
+
+| 参数 值 | 含义                                                         |
+| ------- | ------------------------------------------------------------ |
+| 0       | 不开启读写分离机制 , 所有读操作都发送到当前可用的writeHost上 |
+| 1       | 全部的readHost 与 备用的writeHost 都参与select 语句的负载均衡（主要针对于双主双从模式） |
+| 2       | 所有的读写操作都随机在writeHost , readHost上分发             |
+| 3       | 所有的读请求随机分发到writeHost对应的readHost上执行, writeHost不负担读压 力 |
+
+所以，在一主一从模式的读写分离中，balance配置1或3都是可以完成读写分离的。
+
+
+
+配置root用户可以访问SHOPPING、ITCAST 以及 ITCAST_RW逻辑库。
+
+server.xml
+
+```xml
+<user name="root" defaultAccount="true">
+    <property name="password">123456</property>
+    <property name="schemas">SHOPPING,ITCAST,ITCAST_RW</property>
+    <!-- 表级 DML 权限设置 -->
+    <!--
+	<privileges check="true">
+		<schema name="DB01" dml="0110" >
+			<table name="TB_ORDER" dml="1110"></table>
+		</schema>
+	</privileges>
+	-->
+</user>
+```
+
+
+
+测试
+
+配置完毕MyCat后，重新启动MyCat。
+
+```bash
+bin/mycat stop
+bin/mycat start
+```
+
+然后观察，在执行增删改操作时，对应的主库及从库的数据变化。 在执行查询操作时，检查主库及从 库对应的数据变化。
+
+
+
+==在测试中，我们可以发现当主节点Master宕机之后，业务系统就只能够读，而不能写入数据了。==
+
+那如何解决这个问题呢？这个时候我们就得通过另外一种主从复制结构来解决了，也就是我们接下来讲解的双主双从。
+
+
+
+### 双主双从
+
+一个主机 Master1 用于处理所有写请求，它的从机 Slave1 和另一台主机 Master2 还有它的从机 Slave2 负责所有读请求。当 Master1 主机宕机后，Master2 主机负责写请求，Master1 、 Master2 互为备机。架构图如下:
+
+![image-20231118230631729](assets/image-20231118230631729.png)
+
+准备
+
+我们需要准备5台服务器，具体的服务器及软件安装情况如下：
+
+| 编号 | IP              | 预装软件     | 角色              |
+| ---- | --------------- | ------------ | ----------------- |
+| 1    | 192.168.200.210 | MyCat、MySQL | MyCat中间件服务器 |
+| 2    | 192.168.200.211 | MySQL        | M1                |
+| 3    | 192.168.200.212 | MySQL        | S1                |
+| 4    | 192.168.200.213 | MySQL        | M2                |
+| 5    | 192.168.200.214 | MySQL        | S2                |
+
+
+
+搭建
+
+主库配置
+
+1. Master1(192.168.200.211)
+
+    <img src="assets/image-20231118231109651.png" alt="image-20231118231109651" style="zoom:50%;" />
+
+    修改配置文件 /etc/my.cnf
+
+    ```bash
+    #mysql 服务ID，保证整个集群环境中唯一，取值范围：1 – 2^32-1，默认为1
+    server-id=1
+    
+    #指定同步的数据库
+    binlog-do-db=db01
+    binlog-do-db=db02
+    binlog-do-db=db03
+    
+    # 在作为从数据库的时候，有写入操作也要更新二进制日志文件
+    log-slave-updates
+    ```
+
+    重启MySQL服务器
+
+    ```bash
+    systemctl restart mysqld
+    ```
+
+    创建账户并授权
+
+    ```bash
+    #创建itcast用户，并设置密码，该用户可在任意主机连接该MySQL服务
+    CREATE USER 'itcast'@'%' IDENTIFIED WITH mysql_native_password BY 'Root@123456';
+    
+    #为 'itcast'@'%' 用户分配主从复制权限
+    GRANT REPLICATION SLAVE ON *.* TO 'itcast'@'%';
+    ```
+
+    通过指令，查看两台主库的二进制日志坐标
+
+    ```bash
+    show master status ;
+    ```
+
+    ![image-20231118231323778](assets/image-20231118231323778.png)
+
+2. Master2(192.168.200.213)
+
+    修改配置文件 /etc/my.cnf
+
+    ```bash
+    #mysql 服务ID，保证整个集群环境中唯一，取值范围：1 – 2^32-1，默认为1
+    server-id=3
+    
+    #指定同步的数据库
+    binlog-do-db=db01
+    binlog-do-db=db02
+    binlog-do-db=db03
+    
+    # 在作为从数据库的时候，有写入操作也要更新二进制日志文件
+    log-slave-updates
+    ```
+
+    重启MySQL服务器
+
+    ```bash
+    systemctl restart mysqld
+    ```
+
+    创建账户并授权
+
+    ```bash
+    #创建itcast用户，并设置密码，该用户可在任意主机连接该MySQL服务
+    CREATE USER 'itcast'@'%' IDENTIFIED WITH mysql_native_password BY 'Root@123456';
+    
+    #为 'itcast'@'%' 用户分配主从复制权限
+    GRANT REPLICATION SLAVE ON *.* TO 'itcast'@'%';
+    ```
+
+    通过指令，查看两台主库的二进制日志坐标
+
+    ```mysql
+    show master status ;
+    ```
+
+    ![image-20231118231453759](assets/image-20231118231453759.png)
+
+从库配置
+
+3. Slave1(192.168.200.212)
+
+     修改配置文件 /etc/my.cnf
+
+    ```bash
+    #mysql 服务ID，保证整个集群环境中唯一，取值范围：1 – 232-1，默认为1
+    server-id=2
+    ```
+
+    重新启动MySQL服务器
+
+    ````bash
+    systemctl restart mysqld
+    ````
+
+4. Slave2(192.168.200.214)
+
+    修改配置文件 /etc/my.cnf
+
+    ```bash
+    #mysql 服务ID，保证整个集群环境中唯一，取值范围：1 – 232-1，默认为1
+    server-id=4
+    ```
+
+    重新启动MySQL服务器
+
+    ```bash
+    systemctl restart mysqld
+    ```
+
+    
+
+从库关联主库 
+
+两台从库配置关联的主库
+
+1. 在 slave1(192.168.200.212)上执行
+
+    ```mysql
+    CHANGE MASTER TO MASTER_HOST='192.168.200.211', MASTER_USER='itcast',
+    MASTER_PASSWORD='Root@123456', MASTER_LOG_FILE='binlog.000002',
+    MASTER_LOG_POS=663;
+    ```
+
+2. 在 slave2(192.168.200.214)上执行
+
+    ```mysql
+    CHANGE MASTER TO MASTER_HOST='192.168.200.213', MASTER_USER='itcast',
+    MASTER_PASSWORD='Root@123456', MASTER_LOG_FILE='binlog.000002',
+    MASTER_LOG_POS=663;
+    ```
+
+3. 启动两台从库主从复制，查看从库状态
+
+    ```bash
+    start slave;
+    show slave status \G;
+    ```
+
+    ![image-20231118231756850](assets/image-20231118231756850.png)
+
+
+
+两台主库相互复制
+
+Master2 复制 Master1，Master1 复制 Master2。
+
+1. 在 Master1(192.168.200.211)上执行
+
+    ```mysql
+    CHANGE MASTER TO MASTER_HOST='192.168.200.213', MASTER_USER='itcast',
+    MASTER_PASSWORD='Root@123456', MASTER_LOG_FILE='binlog.000002',
+    MASTER_LOG_POS=663;
+    ```
+
+2. 在 Master2(192.168.200.213)上执行
+
+    ```mysql
+    CHANGE MASTER TO MASTER_HOST='192.168.200.211', MASTER_USER='itcast',
+    MASTER_PASSWORD='Root@123456', MASTER_LOG_FILE='binlog.000002',
+    MASTER_LOG_POS=663;
+    ```
+
+3. 启动两台从库主从复制，查看从库状态
+
+    ```bash
+    start slave;
+    show slave status \G;
+    ```
+
+    ![image-20231118231906181](assets/image-20231118231906181.png)
+
+经过上述的三步配置之后，双主双从的复制结构就已经搭建完成了。 接下来，我们可以来测试验证一 下。
+
+
+
+测试
+
+分别在两台主库Master1、Master2上执行DDL、DML语句，查看涉及到的数据库服务器的数据同步情 况。
+
+```mysql
+create database db01;
+
+use db01;
+
+create table tb_user(
+    id int(11) not null primary key ,
+    name varchar(50) not null,
+    sex varchar(1)
+)engine=innodb default charset=utf8mb4;
+
+insert into tb_user(id,name,sex) values(1,'Tom','1');
+
+insert into tb_user(id,name,sex) values(2,'Trigger','0');
+
+insert into tb_user(id,name,sex) values(3,'Dawn','1');
+
+insert into tb_user(id,name,sex) values(4,'Jack Ma','1');
+
+insert into tb_user(id,name,sex) values(5,'Coco','0');
+
+insert into tb_user(id,name,sex) values(6,'Jerry','1');
+```
+
+- 在Master1中执行DML、DDL操作，看看数据是否可以同步到另外的三台数据库中。 
+
+- 在Master2中执行DML、DDL操作，看看数据是否可以同步到另外的三台数据库中。
+
+
+
+### 双主双从读写分离
+
+配置
+
+MyCat 控制后台数据库的读写分离和负载均衡由 schema.xml 文件datahost标签的balance属性控 制，通过writeType及switchType来完成失败自动切换的。
+
+1. schema.xml
+
+    配置逻辑库：
+
+    ```xml
+    <schema name="ITCAST_RW2" checkSQLschema="true" sqlMaxLimit="100" dataNode="dn7">
+    </schema>
+    ```
+
+    配置数据节点：
+
+    ```xml
+    <dataNode name="dn7" dataHost="dhost7" database="db01" />
+    ```
+
+    配置节点主机：
+
+    ```xml
+    <dataHost name="dhost7" maxCon="1000" minCon="10" balance="1" writeType="0"
+              dbType="mysql" dbDriver="jdbc" switchType="1" slaveThreshold="100">
+        <heartbeat>select user()</heartbeat>
+        <writeHost host="master1" url="jdbc:mysql://192.168.200.211:3306?
+                                       useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8"
+                   user="root" password="1234" >
+            <readHost host="slave1" url="jdbc:mysql://192.168.200.212:3306?
+                                         useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8"
+                      user="root" password="1234" />
+        </writeHost>
+        <writeHost host="master2" url="jdbc:mysql://192.168.200.213:3306?
+                                       useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8"
+                   user="root" password="1234" >
+            <readHost host="slave2" url="jdbc:mysql://192.168.200.214:3306?
+                                         useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8"
+                      user="root" password="1234" />
+        </writeHost>
+    </dataHost>
+    ```
+
+    具体的对应情况如下：
+
+    ![image-20231118232211544](assets/image-20231118232211544.png)
+
+属性说明：
+
+balance="1" 
+
+代表全部的 readHost 与 stand by writeHost 参与 select 语句的负载均衡，简单的说，当双主双从模式(M1->S1，M2->S2，并且 M1 与 M2 互为主备)，正常情况下， M2,S1,S2 都参与 select 语句的负载均衡 ; 
+
+writeType 
+
+- 0 : 写操作都转发到第1台writeHost, writeHost1挂了, 会切换到writeHost2上; 
+
+- 1 : 所有的写操作都随机地发送到配置的writeHost上 ; 
+
+switchType 
+
+- -1 : 不自动切换 
+
+- 1 : 自动切换
+
+
+
+2. user.xml
+
+    配置root用户也可以访问到逻辑库 ITCAST_RW2。
+
+    ```xml
+    <user name="root" defaultAccount="true">
+        <property name="password">123456</property>
+        <property name="schemas">SHOPPING,ITCAST,ITCAST_RW2</property>
+        <!-- 表级 DML 权限设置 -->
+        <!--
+    	<privileges check="true">
+    		<schema name="DB01" dml="0110" >
+    			<table name="TB_ORDER" dml="1110"></table>
+    		</schema>
+    	</privileges>
+    	-->
+    </user>
+    ```
+
+    
+
+测试
+
+登录MyCat，测试查询及更新操作，判定是否能够进行读写分离，以及读写分离的策略是否正确。
+
+当主库挂掉一个之后，是否能够自动切换。
 
 
 
